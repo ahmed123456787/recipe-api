@@ -9,14 +9,12 @@ from django.test import TestCase
 
 from rest_framework import status
 from rest_framework.test import APIClient
-
-from core.models import Recipe
+from core.models import Recipe, Tag
 
 from recipe.serializers import (
     RecipeSerializer,
     RecipeDetailSerializer,
 )
-
 RECIPES_URL = reverse('recipe:recipe-list')
 
 
@@ -158,3 +156,95 @@ class PrivateRecipeAPITests(TestCase):
             self.assertEqual(getattr(recipe,k),v)
         
         self.assertEqual(recipe.user,self.user)
+    
+    
+    def test_create_recipe_with_new_tag(self):
+        """Test creating a recipe with new tag"""
+        payload = {
+            "title":"taih recipe",
+            "time_minutes":30,
+            "price":Decimal("2.50"),
+            "tags": [{"name":"tai"},{"name":"Dinner"}]
+        }
+        res = self.client.post(RECIPES_URL, payload,format="json")
+        
+        self.assertEqual(res.status_code,status.HTTP_201_CREATED)
+        recipes = Recipe.objects.filter(user=self.user)
+        self.assertEqual(recipes.count(),1)
+        recipe = recipes[0]
+        self.assertEqual(recipe.tags.count(),2)
+        
+        for tag in payload["tags"]:
+            exists = recipe.tags.filter(
+                name=tag["name"],
+                user=self.user
+            ).exists()
+            self.assertTrue(exists)
+    
+    def test_create_recipe_with_tag(self):
+        """Test create a recipe with existing tag"""
+        tag = Tag.objects.create(user=self.user,name="tai")
+        payload = {
+            "title":"taih recipe",
+            "time_minutes":30,
+            "price":Decimal("2.50"),
+            "tags":[{"name":"tai"},{"name":"breakfeast"}]
+        }
+        
+        res = self.client.post(RECIPES_URL, payload,format="json")
+        self.assertEqual(res.status_code,status.HTTP_201_CREATED)
+        recipes = Recipe.objects.filter(user=self.user)
+        self.assertEqual(recipes.count(),1)
+        recipe = recipes[0]
+        self.assertEqual(recipe.tags.count(),2)
+        self.assertIn(tag,recipe.tags.all())
+        
+        for tag in payload["tags"]:
+            exits = recipe.tags.filter(
+                name=tag["name"],
+                user = self.user
+            ).exists()
+            self.assertTrue(exits)
+               
+    def test_create_tag_on_update(self):
+        """test creating tag when updating rcipe"""
+        recipe = create_recipe(user=self.user)
+        
+        payload = {"tags":[{"name":"Lunch"}]}
+        
+        url = detail_url(recipe.id)
+        res = self.client.patch(url, payload, format="json")
+        
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        new_tag = Tag.objects.get(user=self.user, name="Lunch")
+        self.assertIn(new_tag,recipe.tags.all())
+        
+    def test_update_recipe_assign_tag(self):
+        """test assigning existing tag when updating recipe"""
+        tag = Tag.objects.create(user=self.user,name="Tai")
+        recipe = create_recipe(user=self.user)
+        recipe.tags.add(tag)
+        
+        tag_lunch = Tag.objects.create(user=self.user,name="Lunch")             
+        payload = {
+            "tags":[{"name":"Lunch"}]
+        }
+        url = detail_url(recipe.id)
+        res = self.client.patch(url, payload, format="json")
+        
+        self.assertEqual(res.status_code , status.HTTP_200_OK)
+        self.assertIn(tag_lunch,recipe.tags.all()) # tag will be  Lunch 
+        self.assertNotIn(tag,recipe.tags.all()) # Tai tag is no longer assigned because wer changed when updating
+        
+    def test_clear_recipe_tag(self):
+        """Test clearing a recipe tags."""
+        recipe = create_recipe(user=self.user)
+        tag = Tag.objects.create(user=self.user, name="Thai")
+        recipe.tags.add(tag)
+        
+        payload = {"tags":[]}
+        url = detail_url(recipe.id)
+        res = self.client.patch(url, payload,format="json")
+        
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(recipe.tags.count(),0)    
