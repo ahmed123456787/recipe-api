@@ -68,13 +68,26 @@ class PrivateIngredientsTests(TestCase):
             user=user_2
             ,name="Potatoes"
         )  
-        ingredient = Ingredient.objects.get(user=self.user)
+        ingredient = Ingredient.objects.create(user=self.user,name="tomatoes")
         
         res = self.client.get(INGREDIENT_URL)
         
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.count(),1)
+        self.assertEqual(len(res.data),1)
         self.assertEqual(res.data[0]['name'],ingredient.name)
         self.assertEqual(res.data[0]['id'],ingredient.id)
         
+    def test_update_ingredients(self):
+        """Test updating an ingredient,  """  
+        ingredient = Ingredient.objects.create(user=self.user,name="Tomatoes")
+        payload = {
+            "name": "vegetables"
+        }
+        
+        url = detail_url(ingredient.id)
+        res = self.client.patch(url , payload)
+        
+        ingredient.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(ingredient.name,payload["name"])
         

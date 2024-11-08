@@ -48,7 +48,9 @@ class TagViewSet(mixins.ListModelMixin,
         return Tag.objects.filter(user=self.request.user).order_by("-name")
     
     
-class IngredientViewSet(mixins.ListModelMixin,viewsets.GenericViewSet):
+class IngredientViewSet(mixins.ListModelMixin,
+                        viewsets.GenericViewSet,
+                        mixins.UpdateModelMixin):
     """Mange ingredients"""
     serializer_class = IngredientSerializer
     queryset = Ingredient.objects.all()
