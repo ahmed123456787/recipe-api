@@ -15,8 +15,6 @@ SECRET_KEY = 'django-insecure-5$45y-c#*jpm!yp@p%n-a^#t7+31xjwr*h#*k##x851%y2mhy1
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
 
 # Application definition
 
@@ -121,3 +119,13 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL="core.User"
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',  # Ensures JSON responses
+    ),
+    'DEFAULT_PARSER_CLASSES': (
+        'rest_framework.parsers.JSONParser',  # Ensures JSON parsing
+    ),
+}

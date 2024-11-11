@@ -23,46 +23,65 @@ class TagSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     """Serializer for recipe"""
-    tags = TagSerializer(many=True,required=False) # its not required 
+    tags = TagSerializer(many=True, required=False)
+    ingredients = IngredientSerializer(many=True, required=False)
+    
     class Meta:
         model = Recipe
-        fields = ["id", 'title', "time_minutes", "price", "link", "tags"]
-        read_only_fields = ['id']
+        fields = ["id", "title", "time_minutes", "price", "link", "tags", "ingredients"]
+        read_only_fields = ["id"]
     
-    def _get_or_create_tags(self,tags,recipe):
-        """handle getting or creating tags"""
+    def _get_or_create_tags(self, tags, recipe):
+        """Handle getting or creating tags"""
         auth_user = self.context['request'].user
         for tag in tags:
-            tag_obj ,created = Tag.objects.get_or_create(
+            tag_obj, created = Tag.objects.get_or_create(
                 user=auth_user,
                 **tag
             )
             recipe.tags.add(tag_obj)
-            
-             
+    
+    def _get_or_create_ingredients(self, ingredients, recipe):
+        """Handle getting or creating ingredients"""
+        auth_user = self.context['request'].user
+        for ingr in ingredients:
+            ingredient_obj, created = Ingredient.objects.get_or_create(
+                user=auth_user,
+                **ingr
+            )
+            recipe.ingredients.add(ingredient_obj)  # Use lowercase 'ingredients'
     
     def create(self, validated_data):
         """Create a recipe"""
-        tags = validated_data.pop('tags',{})
+        tags = validated_data.pop("tags", [])
+        ingredients = validated_data.pop("ingredients", [])
         recipe = Recipe.objects.create(**validated_data)
+        self._get_or_create_tags(tags, recipe)
+        self._get_or_create_ingredients(ingredients, recipe)
         
-        self._get_or_create_tags(tags,recipe)
-        
-        return recipe    
+        return recipe
     
     def update(self, instance, validated_data):
-        """Update the recipe"""
-        tags = validated_data.pop('tags',None)
+        """Update a recipe"""
+        tags = validated_data.pop("tags", None)
+        ingredients = validated_data.pop("ingredients", None)  # Use lowercase 'ingredients'
         
+        # Clear and update tags if provided
         if tags is not None:
             instance.tags.clear()
             self._get_or_create_tags(tags, instance)
         
-        for attr, value in validated_data.items():
-            setattr(instance,attr,value)
+        # Clear and update ingredients if provided
+        if ingredients is not None:
+            instance.ingredients.clear()
+            self._get_or_create_ingredients(ingredients, instance)
         
-        instance.save()        
-        return instance    
+        # Update other attributes
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+        return instance
                 
         
         
