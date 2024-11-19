@@ -28,7 +28,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Recipe
-        fields = ["id", "title", "time_minutes", "price", "link", "tags", "ingredients"]
+        fields = ["id", "title", "time_minutes", "price", "link", "tags", "ingredients","image"]
         read_only_fields = ["id"]
     
     def _get_or_create_tags(self, tags, recipe):
@@ -65,7 +65,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         """Update a recipe"""
         tags = validated_data.pop("tags", None)
         ingredients = validated_data.pop("ingredients", None)  # Use lowercase 'ingredients'
-        
+          
         # Clear and update tags if provided
         if tags is not None:
             instance.tags.clear()
@@ -91,4 +91,10 @@ class RecipeDetailSerializer(RecipeSerializer):
     class Meta(RecipeSerializer.Meta):
         fields = RecipeSerializer.Meta.fields + ['description']
         
-            
+class RecipeImageSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Recipe
+        fields = ["id", "image"]
+        read_only_fields = ["id"]    
+        extra_kwargs = {"image":{"required":"True"}}       

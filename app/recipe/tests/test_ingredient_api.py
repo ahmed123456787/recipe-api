@@ -1,12 +1,12 @@
 """
 Test Ingredient API
 """
-
+from decimal import Decimal
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-from core.models import Ingredient
+from core.models import Ingredient, Recipe
 from recipe.serializers import IngredientSerializer
 
 from rest_framework import status
@@ -101,3 +101,24 @@ class PrivateIngredientsTests(TestCase):
         self.assertEqual(res.status_code,status.HTTP_204_NO_CONTENT)
         ingredients = Ingredient.objects.all()
         self.assertFalse(ingredients.exists())  
+        
+    def test_ingredients_assigned_to_recipe(self):
+        """Test listning ingredients by those assigned to recipes"""
+        in1 = Ingredient.objects.create(user=self.user, name="def")
+        in2 = Ingredient.objects.create(user=self.user, name="def2")
+        
+        recipe = Recipe.objects.create(
+            title="Apple dola",
+            time_minutes=5,
+            price=Decimal('3.23'),
+            user=self.user
+        )
+        recipe.ingredients.add(in1)
+        
+        res = self.client.get(INGREDIENT_URL, {"assigned_only":1})
+        
+        s1 = IngredientSerializer(in1)
+        s2 = IngredientSerializer(in2)
+        
+        self.assertIn(s1.data, res.data)
+        self.assertNotIn(s2.data, res.data)
