@@ -87,7 +87,3 @@ class IngredientViewSet(BaseRecipeViewSet):
     """Mange ingredients"""
     serializer_class = IngredientSerializer
     queryset = Ingredient.objects.all()
-
-    
-
-    
