@@ -27,8 +27,8 @@ class PublicUserTest(TestCase):
         payload = {
             'email': "test@example.com",
             'password': 'testpass123',
-            'name' : 'test name'
-        }    
+            'username' : 'test username'
+        }     
         res = self.client.post(CREATE_USER_URL,payload)
         self.assertEqual(res.status_code,status.HTTP_201_CREATED)
         user = get_user_model().objects.get(email=payload['email'])
@@ -41,7 +41,7 @@ class PublicUserTest(TestCase):
         payload = {
             'email': "test@example.com",
             'password': 'testpass123',
-            'name' : 'test name'
+            'username' : 'test username'
         }    
         create_user(**payload) # or we can do create_user(email='',password='')
         res = self.client.post(CREATE_USER_URL,payload)
@@ -52,7 +52,7 @@ class PublicUserTest(TestCase):
         payload = {
             'email': "test@example.com",
             'password': 'pw',
-            'name' : 'test drf'
+            'username' : 'test drf'
         }    
         res = self.client.post(CREATE_USER_URL,payload)
         self.assertEqual(res.status_code,status.HTTP_400_BAD_REQUEST)
@@ -64,7 +64,7 @@ class PublicUserTest(TestCase):
     def test_create_token_user(self):
         """Test generates token for valid credential"""
         user_details = {
-            "name":"ahmed",
+            "username":"ahmed",
             "email" :"te@gmail.com",
             "password":"def123"
         }
@@ -116,7 +116,7 @@ class PrivetUserApiTest (TestCase):
         self.user = create_user(
             email="test@example.com",
             password="testpdd",
-            name="test moo"
+            username="test moo"
         )              
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
@@ -132,11 +132,11 @@ class PrivetUserApiTest (TestCase):
         
     def test_update_user_profile(self):
         """Test updating the user profile"""
-        payload = {"name":'Updated me','password':'ahmed123'}
+        payload = {"username":'Updated me','password':'ahmed123'}
         res = self.client.patch(ME_URL,payload)
         
         self.user.refresh_from_db()
-        self.assertEqual(self.user.name,payload['name'])
+        self.assertEqual(self.user.username,payload['username'])
         self.assertTrue(self.user.check_password(payload['password']))
         self.assertEqual(res.status_code,status.HTTP_200_OK)
         
