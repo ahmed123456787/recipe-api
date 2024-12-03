@@ -11,7 +11,7 @@ from django.utils.translation import gettext as _
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
-        fields = ['email', 'password', 'name']
+        fields = ['email', 'password', 'username']
         extra_kwargs = {"password":{"write_only":True,"min_length":5}}
     
     def create(self,validated_data):
